@@ -105,15 +105,12 @@ public class ReserveApp {
     	String reserveMonth = "12";
     	
     	for(String courtNm : yangjaeDao.getCourtNm()) {
-    		enableTimeList = ra.checkEnableTime(yangjaeDao, reserveMonth+courtNm);
+    		enableTimeList = ra.checkEnableTime(yangjaeDao, reserveMonth+"_"+courtNm);
         	for(String t : enableTimeList) {
         		System.out.println("enable Time : " + t);
         	}
     	}
     	
-    	
-    	
-
     	
     	driver.close();
     }
@@ -213,24 +210,44 @@ public class ReserveApp {
     							if(satFlag == true || sunFlag == true) {
     								if(satFlag == true) {
             							if(g == 1) {	//오전
-            								enableTimeList.add(courtNm+":"+clickDay+"(토):오전:"+timeElement.getText());
+            								enableTimeList.add(courtNm.split("\\_")[0]+"월 "
+            												  +clickDay+"일(토):"
+            												  +courtNm.split("\\_")[1]+"코트:오전:"
+            												  +timeElement.getText());
+            								
             							}else {		//오후
-            								enableTimeList.add(courtNm+":"+clickDay+"(토):오후:"+timeElement.getText());
+            								enableTimeList.add(courtNm.split("\\_")[0]+"월 "
+  												  +clickDay+"일(토):"
+  												  +courtNm.split("\\_")[1]+"코트:오후:"
+  												  +timeElement.getText());
             							}
     								}else {
     									if(g == 1) {	//오전
-            								enableTimeList.add(courtNm+":"+clickDay+"(일):오전:"+timeElement.getText());
+    										enableTimeList.add(courtNm.split("\\_")[0]+"월 "
+    												  +clickDay+"일(일):"
+    												  +courtNm.split("\\_")[1]+"코트:오전:"
+    												  +timeElement.getText());
+            								
             							}else {		//오후
-            								enableTimeList.add(courtNm+":"+clickDay+"(일):오후:"+timeElement.getText());
+            								enableTimeList.add(courtNm.split("\\_")[0]+"월 "
+  												  +clickDay+"일(일):"
+  												  +courtNm.split("\\_")[1]+"코트:오후:"
+  												  +timeElement.getText());
             							}
     								}
     							}else {
         							if(g == 1) {	//오전
 //        								System.out.println(courtNm+":"+clickDay+":오전:"+timeElement.getText());
-        								enableTimeList.add(courtNm+":"+clickDay+":오전:"+timeElement.getText());
+        								enableTimeList.add(courtNm.split("\\_")[0]+"월 "
+												  +clickDay+"일:"
+												  +courtNm.split("\\_")[1]+"코트:오전:"
+												  +timeElement.getText());
         							}else {		//오후
 //        								System.out.println(courtNm+":"+clickDay+":오후:"+timeElement.getText());
-        								enableTimeList.add(courtNm+":"+clickDay+":오후:"+timeElement.getText());
+        								enableTimeList.add(courtNm.split("\\_")[0]+"월 "
+												  +clickDay+"일:"
+												  +courtNm.split("\\_")[1]+"코트:오후:"
+												  +timeElement.getText());
         							}    								
     							}
 

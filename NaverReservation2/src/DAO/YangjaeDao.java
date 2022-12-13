@@ -14,17 +14,17 @@ public class YangjaeDao {
 	String courtUrl = "https://booking.naver.com/booking/10/bizes/210031/items/";
 	public YangjaeDao() {
 		//'22³â 12¿ù
-		courtNum.put("12A","4394828");
-		courtNum.put("12B","4394829");
-		courtNum.put("12C","4394830");
-		courtNum.put("121","4394832");
-		courtNum.put("122","4394834");
-		courtNum.put("123","4394835");
-		courtNum.put("124","4394836");
-		courtNum.put("125","4394837");
-		courtNum.put("126","4394839");
-		courtNum.put("127","4394840");
-		courtNum.put("128","4394841");
+		courtNum.put("12_A","4394828");
+		courtNum.put("12_B","4394829");
+		courtNum.put("12_C","4394830");
+		courtNum.put("12_1","4394832");
+		courtNum.put("12_2","4394834");
+		courtNum.put("12_3","4394835");
+		courtNum.put("12_4","4394836");
+		courtNum.put("12_5","4394837");
+		courtNum.put("12_6","4394839");
+		courtNum.put("12_7","4394840");
+		courtNum.put("12_8","4394841");
 	}
 	
 	public String[] getCourtNm() {
