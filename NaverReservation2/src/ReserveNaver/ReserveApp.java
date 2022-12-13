@@ -25,7 +25,7 @@ import DAO.YangjaeDao;
 public class ReserveApp {
     
     //WebDriver
-    private WebDriver driver;
+    private static WebDriver driver;
     
     private WebElement element;
     
@@ -97,15 +97,31 @@ public class ReserveApp {
     }
     
     public static void main(String[] args) {
+    	ArrayList<String> enableTimeList = new ArrayList<>();
     	YangjaeDao yangjaeDao = new YangjaeDao();
     	ReserveApp ra = new ReserveApp();
     	ra.naverLogin();
-    	ra.checkEnableTime(yangjaeDao);
+    	// input : 예약월
+    	String reserveMonth = "12";
+    	
+    	for(String courtNm : yangjaeDao.getCourtNm()) {
+    		enableTimeList = ra.checkEnableTime(yangjaeDao, reserveMonth+courtNm);
+        	for(String t : enableTimeList) {
+        		System.out.println("enable Time : " + t);
+        	}
+    	}
+    	
+    	
+    	
+
+    	
+    	driver.close();
     }
 
-    public void checkEnableTime(YangjaeDao yangjaeDao) {
-    	driver.get(yangjaeDao.getCourtUrl("12B"));
+    public ArrayList<String> checkEnableTime(YangjaeDao yangjaeDao, String courtNm) {
+    	driver.get(yangjaeDao.getCourtUrl(courtNm));
     	WebDriverWait wait = new WebDriverWait(driver, 20);
+    	ArrayList<String> enableTimeList = new ArrayList<>();
     	
     	// 메헌시민의숲(양재 테니스장) 화면 로딩될때까지 wait  //*[@id="container"]/bk-freetime/div[1]/bk-breadcrumb/div/ul/li[2]/a/span
     	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"container\"]/bk-freetime/div[1]/bk-breadcrumb/div/ul/li[2]/a/span")));
@@ -119,7 +135,7 @@ public class ReserveApp {
     	
     	//달력의 행
     	List<WebElement> calColElements = driver.findElements(By.xpath("//*[@id=\"calendar\"]/table/tbody[1]/*"));
-    	System.out.println("elements count : " + calColElements.size());
+//    	System.out.println("elements count : " + calColElements.size());
     	//달력 각 행의 열  //*[@id="calendar"]/table/tbody[1]/tr[1]
     	
     	for(int i=0;i<calColElements.size();i++) {
@@ -133,6 +149,17 @@ public class ReserveApp {
     			
     			
     			String clickDay = element.getText().split("\\n")[0];
+//    			System.out.println("getAttri : "+ element.getAttribute("class"));
+    			
+    			
+    			Boolean satFlag = false;
+    			Boolean sunFlag = false;
+    			if(element.getAttribute("class").contains("calendar-sat") == true) {
+    				satFlag = true;
+    			}else if(element.getAttribute("class").contains("calendar-sun") == true) {
+    				sunFlag = true;
+    			}
+    			
 //    			System.out.println("clickDay : " + clickDay);
 //    			System.out.println("class attribute : " + element.getAttribute("class"));
     			
@@ -176,32 +203,45 @@ public class ReserveApp {
     				// 선택 못하는 class : class="anchor none"
     				
     				//2중 for문 오전, 오후, 시간
+    				
     				for(int g=1;g<=2;g++) {
     					for(int t=1;t<=12;t++) {
     						WebElement timeElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[2]/div["
     																		+g+"]/ul/li["+t+"]/a"));
     						if(timeElement.getAttribute("class").contains("none") == false) {
-    							System.out.println("Enable time : " + g + ":" + timeElement.getText());
+    							
+    							if(satFlag == true || sunFlag == true) {
+    								if(satFlag == true) {
+            							if(g == 1) {	//오전
+            								enableTimeList.add(courtNm+":"+clickDay+"(토):오전:"+timeElement.getText());
+            							}else {		//오후
+            								enableTimeList.add(courtNm+":"+clickDay+"(토):오후:"+timeElement.getText());
+            							}
+    								}else {
+    									if(g == 1) {	//오전
+            								enableTimeList.add(courtNm+":"+clickDay+"(일):오전:"+timeElement.getText());
+            							}else {		//오후
+            								enableTimeList.add(courtNm+":"+clickDay+"(일):오후:"+timeElement.getText());
+            							}
+    								}
+    							}else {
+        							if(g == 1) {	//오전
+//        								System.out.println(courtNm+":"+clickDay+":오전:"+timeElement.getText());
+        								enableTimeList.add(courtNm+":"+clickDay+":오전:"+timeElement.getText());
+        							}else {		//오후
+//        								System.out.println(courtNm+":"+clickDay+":오후:"+timeElement.getText());
+        								enableTimeList.add(courtNm+":"+clickDay+":오후:"+timeElement.getText());
+        							}    								
+    							}
+
     						}
     					}
-    				}
-    				
-    				
-    				
-//        			try {
-//    					Thread.sleep(1000);
-//    				} catch (InterruptedException e) {
-//    					// TODO Auto-generated catch block
-//    					e.printStackTrace();
-//    				}
-    			}
+    				}    				
+    			} //end if
     		}
-    		
-
     	}
     	 
-    	
-    	
+    	return enableTimeList;
     }
     
     public void naverLogin() {

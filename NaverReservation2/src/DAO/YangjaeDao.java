@@ -10,6 +10,7 @@ public class YangjaeDao {
 	
 	Map<String,String> courtNum = new HashMap<>();
 	WebDriver driver;
+	String[] courtNmArr = {"A","B","C","1","2","3","4","5","6","7","8"};
 	String courtUrl = "https://booking.naver.com/booking/10/bizes/210031/items/";
 	public YangjaeDao() {
 		//'22³â 12¿ù
@@ -26,6 +27,10 @@ public class YangjaeDao {
 		courtNum.put("128","4394841");
 	}
 	
+	public String[] getCourtNm() {
+		return courtNmArr;
+	}
+	
 	public ArrayList getAllCourtUrl(){
 		ArrayList<String> rtnCourtUrl = new ArrayList<>();
 		
@@ -34,20 +39,22 @@ public class YangjaeDao {
 		}
 		
 		for(String s : rtnCourtUrl) {
-			System.out.println("url : " + s);
+//			System.out.println("url : " + s);
 		}
 		return rtnCourtUrl;
 	}
 	
 	public String getCourtUrl(String courtName){
+//		System.out.println("courtName : " + courtName);
 		String rtnVal = "";
 		
 		for(String key : courtNum.keySet()) {
-			if(key == courtName) {
+//			System.out.println("key : " + key);
+			if(key.equals(courtName) == true) {
 				rtnVal = courtUrl + courtNum.get(key);
 			}
 		}
-		System.out.println("court url : " + rtnVal);
+//		System.out.println("court url : " + rtnVal);
 		return rtnVal;
 	}
 	
