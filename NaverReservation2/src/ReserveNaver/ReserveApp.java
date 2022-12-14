@@ -8,18 +8,21 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import Common.AES256;
 import Common.ClipBoard;
 import Common.FileFunc;
 import Common.SearchCalenderDayIndex;
+import DAO.ReserveInfoDao;
 import DAO.YangjaeDao;
 
 public class ReserveApp {
@@ -105,23 +108,145 @@ public class ReserveApp {
     	String reserveMonth = "12";
     	
     	for(String courtNm : yangjaeDao.getCourtNm()) {
-    		enableTimeList = ra.checkEnableTime(yangjaeDao, reserveMonth+"_"+courtNm);
-        	for(String t : enableTimeList) {
-        		System.out.println("enable Time : " + t);
-        	}
+    		yangjaeDao = ra.checkEnableTime(yangjaeDao, reserveMonth+"_"+courtNm);
     	}
     	
     	
-    	driver.close();
+    	
+    	reserveCourt(yangjaeDao.getReserveInfo().get(yangjaeDao.getReserveInfo().size()-1));
+    	
+    	//test code
+//    	ReserveInfoDao r = new ReserveInfoDao();
+//    	r.setUrl("https://booking.naver.com/booking/10/bizes/210031/items/4394841");  //12월 8번코트 
+//    	r.setxPathCalDay2_calCol("4");
+//    	r.setxPathCalDay4_calRow("2"); //27일
+//    	r.setxPathTime2_amPmFlag("2"); //AM
+//    	r.setxPathTime4_timeFlag("700"
+//    			+ ""
+//    			+ ""
+//    			); //8:00
+//    	
+//    	reserveCourt(r);
+    	
+//    	driver.close();
     }
 
-    public ArrayList<String> checkEnableTime(YangjaeDao yangjaeDao, String courtNm) {
+    
+    public static void reserveCourt(ReserveInfoDao reserveInfoDao ) {
+    	WebDriverWait wait = new WebDriverWait(driver, 20);
+    	System.out.println("reserveInfoDao : " + reserveInfoDao.toString());
+    	driver.get(reserveInfoDao.getUrl());
+    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"container\"]/bk-freetime/div[1]/bk-breadcrumb/div/ul/li[2]/a/span")));
+//    	reserveInfoDao.getXpathCalDay();
+//    	reserveInfoDao.getXpathTime();
+    	
+    	while(true) {
+    		WebElement calDayElement = driver.findElement(By.xpath(reserveInfoDao.getXpathCalDay()));
+        	calDayElement.click();
+        	
+        	String clickDay = calDayElement.getText().split("\\n")[0];
+        	String displayTimeTabDay = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[1]/em/span[1]"))
+    				.getText().replaceAll(" ", "").split("\\.")[1];
+        	
+        	if(clickDay.equals(displayTimeTabDay) == true) {
+        		break;
+        	}
+    	}
+    	
+    	//예약 시간 클릭
+    	WebElement timeElement = driver.findElement(By.xpath(reserveInfoDao.getXpathTime()));
+    	try {
+    		timeElement.click();
+    	}catch(Exception e) {
+    		e.getStackTrace();
+    	}
+    	
+    	
+    	//예약시간 선택 버튼 //*[@id="container"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[3]/button
+    	WebElement reserveButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[3]/button"));
+    	while(true) {
+    		if(reserveButtonElement.getAttribute("class").contains("on") == true) {
+    			reserveButtonElement.click();
+    			break;
+    		}
+    	}
+    	
+    	
+    	// 다음단계 버튼  //*[@id="container"]/bk-freetime/div[2]/div[2]/bk-submit/div/button
+    	WebElement nextButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button"));
+    	nextButtonElement.click();
+    	
+    	//스크롤
+    	JavascriptExecutor js = (JavascriptExecutor) driver;
+    	js.executeScript("window.scrollTo(0,document.body.scrollHeight)");
+
+    	
+    	
+    	//결제하기 버튼 //*[@id="container"]/bk-freetime/div[2]/div[2]/bk-submit/div/button
+    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button")));
+    	WebElement payButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button"));
+    	payButtonElement.click();
+
+    	
+    	//일반결제 radio  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/ul/li[4]/div/span/span
+    	
+    	//  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/dl/dt/a
+
+    	
+    	
+    	
+//    	WebElement normalRadioElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/ul/li[4]/div/span/span"));
+//    	normalRadioElement.click();
+    	
+    	//일반결제 선택  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/ul/li[4]/div[1]/label
+    	WebElement normalRadioElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/ul/li[4]/div[1]/label"));
+    	js.executeScript("arguments[0].scrollIntoView();", normalRadioElement);
+    	normalRadioElement.click();
+    	
+    	// 나중에 결제 radio //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/ul/li[4]/ul/li[2]/label
+    	WebElement postPayRadioElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/ul/li[4]/ul/li[2]/label"));
+    	postPayRadioElement.click();
+    	
+    	//입금은행 selectbox  //*[@id="bankCodeList"]/div/div/select
+    	Select combobox = new Select(driver.findElement(By.xpath("//*[@id=\"bankCodeList\"]/div/div/select")));
+//    	List<WebElement> optionList = combobox.getAllSelectedOptions();
+    	combobox.selectByValue("004");
+    	
+    	//계좌선택 클릭 //*[@id="refund-account-section"]
+//    	WebElement accountElement = driver.findElement(By.xpath("//*[@id=\"refund-account-section\"]"));
+//    	accountElement.click();
+    	
+    	//환불정산액 적립  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/div[1]/div[2]/div[2]/div/ul/li[2]/label
+    	WebElement refundChargeElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/div[1]/div[2]/div[2]/div/ul/li[2]/label"));
+    	refundChargeElement.click();
+    	
+    	
+    	//결제하기 버튼  //*[@id="Checkout_order__2yAvT"]/div[6]/button
+//    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"Checkout_order__2yAvT\"]/div[6]/button")));
+    	WebElement payButton1Element = driver.findElement(By.xpath("//*[@id=\"Checkout_order__2yAvT\"]/div[6]/button"));
+    	js.executeScript("arguments[0].scrollIntoView();", payButton1Element);
+    	payButton1Element.click();
+    	
+
+    	
+    	
+    }
+    
+    
+    
+    public YangjaeDao checkEnableTime(YangjaeDao yangjaeDao, String courtNm) {
     	driver.get(yangjaeDao.getCourtUrl(courtNm));
     	WebDriverWait wait = new WebDriverWait(driver, 20);
-    	ArrayList<String> enableTimeList = new ArrayList<>();
+//    	ArrayList<String> enableTimeList = new ArrayList<>();
     	
-    	// 메헌시민의숲(양재 테니스장) 화면 로딩될때까지 wait  //*[@id="container"]/bk-freetime/div[1]/bk-breadcrumb/div/ul/li[2]/a/span
-    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"container\"]/bk-freetime/div[1]/bk-breadcrumb/div/ul/li[2]/a/span")));
+    	try{
+        	// 메헌시민의숲(양재 테니스장) 화면 로딩될때까지 wait  //*[@id="container"]/bk-freetime/div[1]/bk-breadcrumb/div/ul/li[2]/a/span
+        	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"container\"]/bk-freetime/div[1]/bk-breadcrumb/div/ul/li[2]/a/span")));	
+    	}catch(Exception e) {
+    		System.out.println("없는 url : " + courtNm + " : " + yangjaeDao.getCourtUrl(courtNm));
+    		return yangjaeDao;
+    	}
+
     	
     	/*달력 parsing //*[@id="calendar"]/table
     	 * 달력 열은 7개 (일,월,화,수,목,금,토)
@@ -135,11 +260,11 @@ public class ReserveApp {
 //    	System.out.println("elements count : " + calColElements.size());
     	//달력 각 행의 열  //*[@id="calendar"]/table/tbody[1]/tr[1]
     	
-    	for(int i=0;i<calColElements.size();i++) {
+    	for(int i=1;i<=calColElements.size();i++) {
     		
-    		for(int j=0;j<7;j++) { //열(일~토)
+    		for(int j=1;j<=7;j++) { //열(일~토)
 //    			System.out.println("i:j="+i+":"+j);
-    			element = driver.findElement(By.xpath("//*[@id=\"calendar\"]/table/tbody[1]/tr["+(i+1)+"]/td["+(j+1)+"]"));
+    			element = driver.findElement(By.xpath("//*[@id=\"calendar\"]/table/tbody[1]/tr["+i+"]/td["+j+"]"));
 //    			System.out.println("class name : " + element.getClass());
 //    			System.out.println(element.getTagName());
     			
@@ -206,7 +331,25 @@ public class ReserveApp {
     						WebElement timeElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[2]/div["
     																		+g+"]/ul/li["+t+"]/a"));
     						if(timeElement.getAttribute("class").contains("none") == false) {
+    							ReserveInfoDao reserveInfoDao = new ReserveInfoDao();
+    							reserveInfoDao.setUrl(yangjaeDao.getCourtUrl(courtNm));
+    							reserveInfoDao.setCourtName(courtNm);
+    							if(satFlag == true) {
+    								reserveInfoDao.setSatFlag(true);
+    							}
+    							if(sunFlag == true) {
+    								reserveInfoDao.setSunFlag(true);
+    							}
+    							reserveInfoDao.setxPathCalDay2_calCol(Integer.toString(i));
+    							reserveInfoDao.setxPathCalDay4_calRow(Integer.toString(j));
+    							reserveInfoDao.setxPathTime2_amPmFlag(Integer.toString(g));
+    							reserveInfoDao.setxPathTime4_timeFlag(Integer.toString(t));
     							
+    							
+    							yangjaeDao.addReserveInfo(reserveInfoDao);
+    							
+    							
+    							/*
     							if(satFlag == true || sunFlag == true) {
     								if(satFlag == true) {
             							if(g == 1) {	//오전
@@ -250,15 +393,16 @@ public class ReserveApp {
 												  +timeElement.getText());
         							}    								
     							}
+    							*/
 
     						}
-    					}
-    				}    				
+    					}	//end for t
+    				}   //enf for g 				
     			} //end if
     		}
     	}
     	 
-    	return enableTimeList;
+    	return yangjaeDao;
     }
     
     public void naverLogin() {

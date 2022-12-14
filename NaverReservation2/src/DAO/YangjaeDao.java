@@ -1,6 +1,7 @@
 package DAO;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,6 +13,8 @@ public class YangjaeDao {
 	WebDriver driver;
 	String[] courtNmArr = {"A","B","C","1","2","3","4","5","6","7","8"};
 	String courtUrl = "https://booking.naver.com/booking/10/bizes/210031/items/";
+	ArrayList<ReserveInfoDao> reserveInfos = new ArrayList<>();
+	
 	public YangjaeDao() {
 		//'22³â 12¿ù
 		courtNum.put("12_A","4394828");
@@ -27,6 +30,20 @@ public class YangjaeDao {
 		courtNum.put("12_8","4394841");
 	}
 	
+	public void addReserveInfo(ReserveInfoDao reserveInfoDao) {
+		reserveInfos.add(reserveInfoDao);
+	}
+	
+	public ArrayList<ReserveInfoDao> getReserveInfo(){
+		return this.reserveInfos;
+	}
+	
+	@Override
+	public String toString() {
+		return "YangjaeDao [courtNum=" + courtNum + ", driver=" + driver + ", courtNmArr=" + Arrays.toString(courtNmArr)
+				+ ", courtUrl=" + courtUrl + ", reserveInfos=" + reserveInfos + "]";
+	}
+
 	public String[] getCourtNm() {
 		return courtNmArr;
 	}
