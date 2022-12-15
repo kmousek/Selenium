@@ -1,9 +1,15 @@
 package ReserveNaver;
 
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -52,38 +58,8 @@ public class ReserveApp {
     //clipBoard
     private ClipBoard cp = new ClipBoard();
     
-    //File Read to List
-    private static FileFunc ff = new FileFunc();
-    
-    private static List<String> reserveList = new ArrayList();
-    
-    
     //달력 좌표 찾기
     private SearchCalenderDayIndex scdi = new SearchCalenderDayIndex();
-    
-    // xPath
-    private String calXPath01 = "//*[@id=\"calendar\"]/table/tbody/tr[";
-    private String calXPath02 = "]/td[";
-    private String calXPath03 = "]/a/span[1]";
-    
-    
-    private String reserveTimeXPath01 = "//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[2]/div[";
-    private String reserveTimeXPath02 = "]/ul/li[";
-    private String reserveTimeXPath03 = "]/a/span/span[1]";
-    
-    private String reserveTimeButton = "//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[3]/button";
-    private String nextButton = "//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button";
-    private String nPayButton = "/html/body/app/div[2]/div[2]/bk-freetime/div[2]/div[2]/bk-submit/div/button";
-    private String nomalPay = "//*[@id=\"orderForm\"]/div/div[5]/div[1]/div[1]/ul[1]/li[3]/div[1]/span/span";
-    private String postPay = "//*[@id=\"orderForm\"]/div/div[5]/div[1]/div[1]/ul[1]/li[3]/ul/li[2]/span[1]/span";
-    private String bankDrop = "//*[@id=\"bankCodeList\"]/div/div";
-    private String kukMinBank = "/html/body/div[5]/div/ul/li[2]";
-    private String orderButton = "//*[@id=\"orderForm\"]/div/div[7]/button";
-    private String orderDetailButton = "//*[@id=\"root\"]/div[3]/div/div[3]/a";   
-    
-    
-    //Timestamp
-    private static Timestamp ts;
     
     public ReserveApp() {
         super(); 
@@ -99,21 +75,67 @@ public class ReserveApp {
          driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
     }
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParseException {
     	ArrayList<String> enableTimeList = new ArrayList<>();
     	YangjaeDao yangjaeDao = new YangjaeDao();
     	ReserveApp ra = new ReserveApp();
     	ra.naverLogin();
-    	// input : 예약월
-    	String reserveMonth = "12";
     	
-    	for(String courtNm : yangjaeDao.getCourtNm()) {
-    		yangjaeDao = ra.checkEnableTime(yangjaeDao, reserveMonth+"_"+courtNm);
+    	ArrayList<int[]> reserveDays = new ArrayList<>();
+    	
+    	int[] reserveDay1 = {2022,12,17};
+    	int[] reserveDay2 = {2022,12,18};
+    	int[] reserveDay3 = {2022,12,24};
+    	int[] reserveDay4 = {2022,12,25};
+    	reserveDays.add(reserveDay1);
+    	reserveDays.add(reserveDay2);
+    	reserveDays.add(reserveDay3);
+    	reserveDays.add(reserveDay4);
+    	
+    	String[] reserveCourtList = {"A","B","C"};  //실내
+    	
+    	while(true) {
+        	for(int[] reserveDate : reserveDays) {
+        		//create url
+        		for(String courtList : reserveCourtList) {
+        			String url = yangjaeDao.getCourtUrl(Integer.toString(reserveDate[1])+"_"+courtList);
+        			
+        			try {
+        				reserveCourtOfDay(url, reserveDate);
+        			}catch(Exception e) {
+        				System.out.println("예외발생");
+        			}
+        			
+        		}
+        	}
+        	
+        	try {
+				Thread.sleep(30000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     	}
     	
+
+    	// input : 예약월
+//    	String reserveMonth = "12";
     	
     	
-    	reserveCourt(yangjaeDao.getReserveInfo().get(yangjaeDao.getReserveInfo().size()-1));
+//    	int[] idx = SearchCalenderDayIndex.getDayIndex(2022,12,15);
+    	
+//    	for(int i : idx) {
+//    		System.out.println("index : " + i);
+//    	}
+    	
+//    	for(String courtNm : yangjaeDao.getCourtNm()) {
+//    		yangjaeDao = ra.checkEnableTime(yangjaeDao, reserveMonth+"_"+courtNm);
+//    	}
+//
+//    	reserveCourt(yangjaeDao.getReserveInfo().get(yangjaeDao.getReserveInfo().size()-1));
+    	
+    	
+    	
     	
     	//test code
 //    	ReserveInfoDao r = new ReserveInfoDao();
@@ -128,9 +150,109 @@ public class ReserveApp {
 //    	
 //    	reserveCourt(r);
     	
+    	
+    	
+//    	dayOfWeek(stringToDate("20221214"));
+    	
 //    	driver.close();
     }
+    
+    
 
+
+    
+    public static void reserveCourtOfDay(String url, int[] reserveDate) {
+    	WebDriverWait wait = new WebDriverWait(driver, 20);
+
+    	ReserveInfoDao reserveInfoDao = new ReserveInfoDao();
+    	
+    	int[] calIdx = SearchCalenderDayIndex.getDayIndex(reserveDate[0], reserveDate[1], reserveDate[2]);
+    	
+    	reserveInfoDao.setxPathCalDay2_calCol(Integer.toString(calIdx[0]));
+    	reserveInfoDao.setxPathCalDay4_calRow(Integer.toString(calIdx[1]));
+    	
+    	driver.get(url);
+    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"container\"]/bk-freetime/div[1]/bk-breadcrumb/div/ul/li[2]/a/span")));
+    	
+    	while(true) {
+    		WebElement calDayElement = driver.findElement(By.xpath(reserveInfoDao.getXpathCalDay()));
+        	calDayElement.click();
+        	
+        	String clickDay = calDayElement.getText().split("\\n")[0];
+        	String displayTimeTabDay = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[1]/em/span[1]"))
+    				.getText().replaceAll(" ", "").split("\\.")[1];
+        	
+        	if(clickDay.equals(displayTimeTabDay) == true) {
+        		break;
+        	}
+    	}
+    	
+		for(int g=1;g<=2;g++) {
+			for(int t=1;t<=12;t++) {
+				WebElement timeElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[2]/div["
+																+g+"]/ul/li["+t+"]/a"));
+				if(timeElement.getAttribute("class").contains("none") == false) {
+					reserveInfoDao.setxPathTime2_amPmFlag(Integer.toString(g));
+					reserveInfoDao.setxPathTime4_timeFlag(Integer.toString(t));
+					
+			    	//예약 시간 클릭
+			    	try {
+			    		timeElement.click();
+			    	}catch(Exception e) {
+			    		e.getStackTrace();
+			    	}
+			    	
+			    	//예약시간 선택 버튼 //*[@id="container"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[3]/button
+			    	WebElement reserveButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[3]/button"));
+			    	while(true) {
+			    		if(reserveButtonElement.getAttribute("class").contains("on") == true) {
+			    			reserveButtonElement.click();
+			    			break;
+			    		}
+			    	}
+			    	
+			    	// 다음단계 버튼  //*[@id="container"]/bk-freetime/div[2]/div[2]/bk-submit/div/button
+			    	WebElement nextButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button"));
+			    	nextButtonElement.click();
+			    	
+			    	//스크롤
+			    	JavascriptExecutor js = (JavascriptExecutor) driver;
+			    	js.executeScript("window.scrollTo(0,document.body.scrollHeight)");
+
+			    	//결제하기 버튼 //*[@id="container"]/bk-freetime/div[2]/div[2]/bk-submit/div/button
+			    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button")));
+			    	WebElement payButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button"));
+			    	payButtonElement.click();
+			    	
+			    	//일반결제 선택  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/ul/li[4]/div[1]/label
+			    	WebElement normalRadioElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/ul/li[4]/div[1]/label"));
+			    	js.executeScript("arguments[0].scrollIntoView();", normalRadioElement);
+			    	normalRadioElement.click();
+			    	
+			    	// 나중에 결제 radio //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/ul/li[4]/ul/li[2]/label
+			    	WebElement postPayRadioElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/ul/li[4]/ul/li[2]/label"));
+			    	postPayRadioElement.click();
+			    	
+			    	//입금은행 selectbox  //*[@id="bankCodeList"]/div/div/select
+			    	Select combobox = new Select(driver.findElement(By.xpath("//*[@id=\"bankCodeList\"]/div/div/select")));
+//			    	List<WebElement> optionList = combobox.getAllSelectedOptions();
+			    	combobox.selectByValue("004");
+			    	
+			    	//환불정산액 적립  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/div[1]/div[2]/div[2]/div/ul/li[2]/label
+			    	WebElement refundChargeElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/div[1]/div[2]/div[2]/div/ul/li[2]/label"));
+			    	refundChargeElement.click();
+			    	
+			    	
+			    	//결제하기 버튼  //*[@id="Checkout_order__2yAvT"]/div[6]/button
+//			    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"Checkout_order__2yAvT\"]/div[6]/button")));
+			    	WebElement payButton1Element = driver.findElement(By.xpath("//*[@id=\"Checkout_order__2yAvT\"]/div[6]/button"));
+			    	js.executeScript("arguments[0].scrollIntoView();", payButton1Element);
+			    	payButton1Element.click();
+				}
+			}	//end for t
+		}   //enf for g 	
+    }
+    
     
     public static void reserveCourt(ReserveInfoDao reserveInfoDao ) {
     	WebDriverWait wait = new WebDriverWait(driver, 20);
@@ -425,5 +547,24 @@ public class ReserveApp {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    public static int dayOfWeek(Date date) {
+//    	Date curDate = new Date();
+    	Calendar cal = Calendar.getInstance();
+    	cal.setTime(date);
+    	int dayOfWeekNum = cal.get(Calendar.DAY_OF_WEEK);
+    	
+    	System.out.println("dayOfWeekNum : " + dayOfWeekNum);
+    	return dayOfWeekNum;  //1~7 7:sat, 1:sun
+    }
+    
+    public static Date stringToDate(String dateStr) throws ParseException {
+    	// yyyyMMdd
+    	SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+    	Date date = formatter.parse(dateStr);
+    	System.out.println("date : " + date);
+    	
+    	return date;
     }
 }

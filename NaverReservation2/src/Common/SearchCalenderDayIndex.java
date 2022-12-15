@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.Calendar;
 
 public class SearchCalenderDayIndex {
-	public int[] getDayIndex(int year, int month, int day) {
+	public static int[] getDayIndex(int year, int month, int day) {
 		int[] dayIndex = new int[2];
 		int[][] custCal = new int[6][7];
 		// 1. LocalDate »ý¼º

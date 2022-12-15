@@ -38,12 +38,6 @@ public class YangjaeDao {
 		return this.reserveInfos;
 	}
 	
-	@Override
-	public String toString() {
-		return "YangjaeDao [courtNum=" + courtNum + ", driver=" + driver + ", courtNmArr=" + Arrays.toString(courtNmArr)
-				+ ", courtUrl=" + courtUrl + ", reserveInfos=" + reserveInfos + "]";
-	}
-
 	public String[] getCourtNm() {
 		return courtNmArr;
 	}
@@ -75,9 +69,10 @@ public class YangjaeDao {
 		return rtnVal;
 	}
 	
-	
-	
-	
-	
-	
+	@Override
+	public String toString() {
+		return "YangjaeDao [courtNum=" + courtNum + ", driver=" + driver + ", courtNmArr=" + Arrays.toString(courtNmArr)
+				+ ", courtUrl=" + courtUrl + ", reserveInfos=" + reserveInfos + "]";
+	}
+
 }
