@@ -83,12 +83,12 @@ public class ReserveApp {
     	
     	ArrayList<int[]> reserveDays = new ArrayList<>();
     	
-    	int[] reserveDay1 = {2022,12,17};
-    	int[] reserveDay2 = {2022,12,18};
+//    	int[] reserveDay1 = {2022,12,17};
+//    	int[] reserveDay2 = {2022,12,18};
     	int[] reserveDay3 = {2022,12,24};
     	int[] reserveDay4 = {2022,12,25};
-    	reserveDays.add(reserveDay1);
-    	reserveDays.add(reserveDay2);
+//    	reserveDays.add(reserveDay1);
+//    	reserveDays.add(reserveDay2);
     	reserveDays.add(reserveDay3);
     	reserveDays.add(reserveDay4);
     	
