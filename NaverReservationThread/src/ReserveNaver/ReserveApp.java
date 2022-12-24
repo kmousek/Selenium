@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
@@ -85,14 +87,15 @@ public class ReserveApp {
     	
 //    	int[] reserveDay1 = {2022,12,17};
 //    	int[] reserveDay2 = {2022,12,18};
-    	int[] reserveDay3 = {2022,12,24};
-    	int[] reserveDay4 = {2022,12,25};
+    	int[] reserveDay3 = {2022,12,29};
+    	int[] reserveDay4 = {2022,12,30};
 //    	reserveDays.add(reserveDay1);
 //    	reserveDays.add(reserveDay2);
     	reserveDays.add(reserveDay3);
     	reserveDays.add(reserveDay4);
     	
     	String[] reserveCourtList = {"A","B","C"};  //실내
+    	int[] reserveTime = {19,20,21,22};	//19~22시
     	
     	while(true) {
         	for(int[] reserveDate : reserveDays) {
@@ -101,7 +104,7 @@ public class ReserveApp {
         			String url = yangjaeDao.getCourtUrl(Integer.toString(reserveDate[1])+"_"+courtList);
         			
         			try {
-        				reserveCourtOfDay(url, reserveDate);
+        				reserveCourtOfDay(url, reserveDate, reserveTime);
         			}catch(Exception e) {
         				System.out.println("예외발생");
         			}
@@ -161,7 +164,7 @@ public class ReserveApp {
 
 
     
-    public static void reserveCourtOfDay(String url, int[] reserveDate) {
+    public static void reserveCourtOfDay(String url, int[] reserveDate, int[] reserveTime) {
     	WebDriverWait wait = new WebDriverWait(driver, 20);
 
     	ReserveInfoDao reserveInfoDao = new ReserveInfoDao();
@@ -192,67 +195,93 @@ public class ReserveApp {
 				WebElement timeElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[2]/div["
 																+g+"]/ul/li["+t+"]/a"));
 				if(timeElement.getAttribute("class").contains("none") == false) {
-					reserveInfoDao.setxPathTime2_amPmFlag(Integer.toString(g));
-					reserveInfoDao.setxPathTime4_timeFlag(Integer.toString(t));
-					
-			    	//예약 시간 클릭
-			    	try {
-			    		timeElement.click();
-			    	}catch(Exception e) {
-			    		e.getStackTrace();
-			    	}
-			    	
-			    	//예약시간 선택 버튼 //*[@id="container"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[3]/button
-			    	WebElement reserveButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[3]/button"));
-			    	while(true) {
-			    		if(reserveButtonElement.getAttribute("class").contains("on") == true) {
-			    			reserveButtonElement.click();
-			    			break;
-			    		}
-			    	}
-			    	
-			    	// 다음단계 버튼  //*[@id="container"]/bk-freetime/div[2]/div[2]/bk-submit/div/button
-			    	WebElement nextButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button"));
-			    	nextButtonElement.click();
-			    	
-			    	//스크롤
-			    	JavascriptExecutor js = (JavascriptExecutor) driver;
-			    	js.executeScript("window.scrollTo(0,document.body.scrollHeight)");
+					for(int timeI=0;timeI<reserveTime.length;timeI++) {
+						int[] timeIdx = convertTimeToIndex(reserveTime[timeI]);
+						if((timeIdx[0] == g) && (timeIdx[1] == t)) {
+							reserveInfoDao.setxPathTime2_amPmFlag(Integer.toString(g));
+							reserveInfoDao.setxPathTime4_timeFlag(Integer.toString(t));
+							
+					    	//예약 시간 클릭
+					    	try {
+					    		timeElement.click();
+					    	}catch(Exception e) {
+					    		e.getStackTrace();
+					    	}
+					    	
+					    	//예약시간 선택 버튼 //*[@id="container"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[3]/button
+					    	WebElement reserveButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[3]/button"));
+					    	while(true) {
+					    		if(reserveButtonElement.getAttribute("class").contains("on") == true) {
+					    			reserveButtonElement.click();
+					    			break;
+					    		}
+					    	}
+					    	
+					    	// 다음단계 버튼  //*[@id="container"]/bk-freetime/div[2]/div[2]/bk-submit/div/button
+					    	WebElement nextButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button"));
+					    	nextButtonElement.click();
+					    	
+					    	//스크롤
+					    	JavascriptExecutor js = (JavascriptExecutor) driver;
+					    	js.executeScript("window.scrollTo(0,document.body.scrollHeight)");
 
-			    	//결제하기 버튼 //*[@id="container"]/bk-freetime/div[2]/div[2]/bk-submit/div/button
-			    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button")));
-			    	WebElement payButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button"));
-			    	payButtonElement.click();
-			    	
-			    	//일반결제 선택  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/ul/li[4]/div[1]/label
-			    	WebElement normalRadioElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/ul/li[4]/div[1]/label"));
-			    	js.executeScript("arguments[0].scrollIntoView();", normalRadioElement);
-			    	normalRadioElement.click();
-			    	
-			    	// 나중에 결제 radio //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/ul/li[4]/ul/li[2]/label
-			    	WebElement postPayRadioElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/ul/li[4]/ul/li[2]/label"));
-			    	postPayRadioElement.click();
-			    	
-			    	//입금은행 selectbox  //*[@id="bankCodeList"]/div/div/select
-			    	Select combobox = new Select(driver.findElement(By.xpath("//*[@id=\"bankCodeList\"]/div/div/select")));
-//			    	List<WebElement> optionList = combobox.getAllSelectedOptions();
-			    	combobox.selectByValue("004");
-			    	
-			    	//환불정산액 적립  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/div[1]/div[2]/div[2]/div/ul/li[2]/label
-			    	WebElement refundChargeElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/div[1]/div[2]/div[2]/div/ul/li[2]/label"));
-			    	refundChargeElement.click();
-			    	
-			    	
-			    	//결제하기 버튼  //*[@id="Checkout_order__2yAvT"]/div[6]/button
-//			    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"Checkout_order__2yAvT\"]/div[6]/button")));
-			    	WebElement payButton1Element = driver.findElement(By.xpath("//*[@id=\"Checkout_order__2yAvT\"]/div[6]/button"));
-			    	js.executeScript("arguments[0].scrollIntoView();", payButton1Element);
-			    	payButton1Element.click();
+					    	//결제하기 버튼 //*[@id="container"]/bk-freetime/div[2]/div[2]/bk-submit/div/button
+					    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button")));
+					    	WebElement payButtonElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/div[2]/bk-submit/div/button"));
+					    	payButtonElement.click();
+					    	
+					    	//일반결제 선택  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/ul/li[4]/div[1]/label
+					    	WebElement normalRadioElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/ul/li[4]/div[1]/label"));
+					    	js.executeScript("arguments[0].scrollIntoView();", normalRadioElement);
+					    	normalRadioElement.click();
+					    	
+					    	// 나중에 결제 radio //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/ul/li[4]/ul/li[2]/label
+					    	WebElement postPayRadioElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/ul/li[4]/ul/li[2]/label"));
+					    	postPayRadioElement.click();
+					    	
+					    	//입금은행 selectbox  //*[@id="bankCodeList"]/div/div/select
+					    	Select combobox = new Select(driver.findElement(By.xpath("//*[@id=\"bankCodeList\"]/div/div/select")));
+//					    	List<WebElement> optionList = combobox.getAllSelectedOptions();
+					    	combobox.selectByValue("004");
+					    	
+					    	//환불정산액 적립  //*[@id="PAYMENT_WRAP"]/div[1]/div[1]/div[1]/div[2]/div[2]/div/ul/li[2]/label
+					    	WebElement refundChargeElement = driver.findElement(By.xpath("//*[@id=\"PAYMENT_WRAP\"]/div[1]/div[1]/div[1]/div[2]/div[2]/div/ul/li[2]/label"));
+					    	refundChargeElement.click();
+					    	
+					    	
+					    	//결제하기 버튼  //*[@id="Checkout_order__2yAvT"]/div[6]/button
+//					    	wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"Checkout_order__2yAvT\"]/div[6]/button")));
+					    	WebElement payButton1Element = driver.findElement(By.xpath("//*[@id=\"Checkout_order__2yAvT\"]/div[6]/button"));
+					    	js.executeScript("arguments[0].scrollIntoView();", payButton1Element);
+					    	payButton1Element.click();
+						}
+						
+					}
+					
+
 				}
 			}	//end for t
 		}   //enf for g 	
     }
     
+    
+    public static int[] convertTimeToIndex(int timeInt) {
+    	//   AM 12 1 2 3 4 5 6 7 8  9 10 11 PM 12 1  2  3  4  5  6  7  8  9  10 11
+    	//       0 1 2 3 4 5 6 7 8  9 10 11    12 13 14 15 16 17 18 19 20 21 22 23
+    	//index  1 2 3 4 5 6 7 8 9 10 11 12	   1  2  3  4  5  6  7  8  9  10 11 12
+    	
+    	int[] rtnArr = new int[2];
+    	
+    	if(timeInt>11) {
+			rtnArr[0] = 2; //PM
+			rtnArr[1] = timeInt-11;
+		}else {
+			rtnArr[0] = 1; //AM
+			rtnArr[1] = timeInt+1;
+		}
+    	
+    	return rtnArr;
+    }
     
     public static void reserveCourt(ReserveInfoDao reserveInfoDao ) {
     	WebDriverWait wait = new WebDriverWait(driver, 20);
