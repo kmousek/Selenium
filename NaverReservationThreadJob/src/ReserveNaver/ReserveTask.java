@@ -39,8 +39,10 @@ public class ReserveTask implements Runnable {
     private String naver_login_url = "https://nid.naver.com/nidlogin.login?mode=form&url=https%3A%2F%2Fwww.naver.com";
     
     //네이버 로그인 정보
-    private String naverId = "RUoRS0lyf9m8sWs9hk3kWg==";
-    private String naverPw = "GBRoWwdfulZHKg3AiNCr9w==";
+//    private String naverId = "RUoRS0lyf9m8sWs9hk3kWg==";
+//    private String naverPw = "GBRoWwdfulZHKg3AiNCr9w==";
+    private static String naverId;
+    private static String naverPw;
 
     //복호화
     private AES256 aes256 = new AES256();
@@ -161,11 +163,13 @@ public class ReserveTask implements Runnable {
 	
 	
     public static void main(String[] args) {
+    	naverId = args[0];
+    	naverPw = args[1];
     	
     	ArrayList<int[]> reserveDays = new ArrayList<>();
     	Map<int[], String[]> dateToUrl = new HashMap<>();
     	try {
-			reserveDays = getAfterfourDayDateLst("20230102","20230131");
+			reserveDays = getAfterfourDayDateLst("20230108","20230131");
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -269,8 +273,9 @@ public class ReserveTask implements Runnable {
 		}
 		
 		// 달력에 날짜 클릭
+		WebElement calDayElement;
 		while(true) {
-			WebElement calDayElement = driver.findElement(By.xpath(xpathCalDay));
+			calDayElement = driver.findElement(By.xpath(xpathCalDay));
 			if(calDayElement.getAttribute("class").contains("calendar-unselectable") == true) {
 //				System.out.println(Thread.currentThread() + ":선택불가일자 : " 
 //														  + reserveDate[0]+","+reserveDate[1]+","+reserveDate[2] );
@@ -282,19 +287,25 @@ public class ReserveTask implements Runnable {
 			String clickDay = calDayElement.getText().split("\\n")[0];
 			String displayTimeTabDay;
 			try {
-				displayTimeTabDay = driver.findElement(
-						By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[1]/em/span[1]"))
+				displayTimeTabDay = wait.until(ExpectedConditions.presenceOfElementLocated(
+						By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[1]/em/span[1]")))
 						.getText().replaceAll(" ", "").split("\\.")[1];
 			}catch(Exception e) {
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(500);
 				} catch (InterruptedException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 				calDayElement.click();
-				displayTimeTabDay = driver.findElement(
-						By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[1]/em/span[1]"))
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				displayTimeTabDay = wait.until(ExpectedConditions.presenceOfElementLocated(
+						By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[1]/em/span[1]")))
 						.getText().replaceAll(" ", "").split("\\.")[1];
 			}
 			
@@ -309,8 +320,22 @@ public class ReserveTask implements Runnable {
     	List<int[]> enableTimeList = new ArrayList<>();
 		for(int g=1;g<=2;g++) {
 			for(int t=1;t<=12;t++) {
-				WebElement timeElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[2]/div["
-																+g+"]/ul/li["+t+"]/a"));
+				WebElement timeElement;
+				try {
+					timeElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[2]/div["
+							+g+"]/ul/li["+t+"]/a"));	
+				}catch(Exception e) {
+					calDayElement.click();
+					try {
+						Thread.sleep(3000);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					timeElement = driver.findElement(By.xpath("//*[@id=\"container\"]/bk-freetime/div[2]/bk-select-time-schedule/div/div[2]/div["
+							+g+"]/ul/li["+t+"]/a"));
+				}
+				
 				if(timeElement.getAttribute("class").contains("none") == false) {
 					//주말이나 휴일은 모든 시간
 					if(yangjaeDao.chkHoliday(reserveDate) == true) {
@@ -361,7 +386,7 @@ public class ReserveTask implements Runnable {
 				timeFlag = 1;
 			}
 
-			System.out.println("[amFlag][pmFlag][timeStIdx][timeEndIdx] : "
+			System.out.println("[timeFlag][timeStIdx][timeEndIdx] : "
 							+ "["+ timeFlag + "]" 
 							+ "["+ timeMax[0] + "]"
 							+ "["+ timeMax[timeMax.length-1] + "]");
@@ -495,12 +520,14 @@ public class ReserveTask implements Runnable {
             
         	driver.get(naver_login_url);
             
-            cp.copyToClip(aes256.decrypt(naverId));
+//            cp.copyToClip(aes256.decrypt(naverId));
+        	cp.copyToClip(naverId);
             WebElement idElement = driver.findElement(By.id("id"));
             idElement.sendKeys(Keys.chord(Keys.CONTROL, "v"));
             
             //iframe 내부에서 pw 필드 탐색
-            cp.copyToClip(aes256.decrypt(naverPw));
+//            cp.copyToClip(aes256.decrypt(naverPw));
+            cp.copyToClip(naverPw);
             WebElement pwElement = driver.findElement(By.id("pw"));
             pwElement.sendKeys(Keys.chord(Keys.CONTROL, "v"));
             
